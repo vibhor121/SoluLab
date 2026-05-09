@@ -21,10 +21,11 @@ export function usePayment() {
   } = usePaymentStore();
 
   const txIdRef = useRef<string | null>(null);
+  const lastFormRef = useRef<PaymentFormValues | null>(null);
 
   const pay = useCallback(
     async (form: PaymentFormValues) => {
-      // Generate transaction ID only on first attempt
+      lastFormRef.current = form;
       if (!txIdRef.current) {
         txIdRef.current = crypto.randomUUID();
         setTransactionId(txIdRef.current);
@@ -114,13 +115,21 @@ export function usePayment() {
     ]
   );
 
+  const retry = useCallback(() => {
+    if (lastFormRef.current) pay(lastFormRef.current);
+  }, [pay]);
+
   const startNewPayment = useCallback(() => {
     txIdRef.current = null;
+    lastFormRef.current = null;
     resetPayment();
   }, [resetPayment]);
 
   const canRetry = (status === 'failed' || status === 'timeout') && currentAttempt < maxAttempts;
   const attemptsExhausted = (status === 'failed' || status === 'timeout') && currentAttempt >= maxAttempts;
+
+  const lastAmount = lastFormRef.current?.amount ?? '';
+  const lastCurrency = lastFormRef.current?.currency ?? currency;
 
   return {
     status,
@@ -131,7 +140,10 @@ export function usePayment() {
     canRetry,
     attemptsExhausted,
     pay,
+    retry,
     startNewPayment,
     currency,
+    lastAmount,
+    lastCurrency,
   };
 }

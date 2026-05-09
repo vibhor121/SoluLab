@@ -8,9 +8,9 @@ interface Props {
   disabled?: boolean;
 }
 
-const CURRENCIES: { value: Currency; label: string; symbol: string }[] = [
-  { value: 'INR', label: 'INR', symbol: '₹' },
-  { value: 'USD', label: 'USD', symbol: '$' },
+const CURRENCIES: { value: Currency; label: string }[] = [
+  { value: 'INR', label: '₹ INR' },
+  { value: 'USD', label: '$ USD' },
 ];
 
 export default function CurrencySelector({ value, onChange, disabled }: Props) {
@@ -19,12 +19,13 @@ export default function CurrencySelector({ value, onChange, disabled }: Props) {
       value={value}
       onChange={(e) => onChange(e.target.value as Currency)}
       disabled={disabled}
-      className="h-full rounded-l-md border-r border-gray-300 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+      className="h-full bg-gray-100 border-r border-gray-200 px-3 text-sm font-semibold text-gray-600 focus:outline-none disabled:opacity-50 cursor-pointer"
+      style={{ minWidth: '90px' }}
       aria-label="Currency"
     >
       {CURRENCIES.map((c) => (
         <option key={c.value} value={c.value}>
-          {c.symbol} {c.label}
+          {c.label}
         </option>
       ))}
     </select>
