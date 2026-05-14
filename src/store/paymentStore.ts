@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { PaymentStatus, Transaction, Currency } from '@/types';
+import type { PaymentStatus, Transaction, Currency, PaymentFormValues } from '@/types';
 
 interface PaymentState {
   status: PaymentStatus;
@@ -11,15 +11,17 @@ interface PaymentState {
   transactions: Transaction[];
   selectedTransaction: Transaction | null;
   currency: Currency;
+  lastFormValues: PaymentFormValues | null;
 
   setStatus: (status: PaymentStatus) => void;
-  setTransactionId: (id: string) => void;
+  setTransactionId: (id: string | null) => void;
   incrementAttempt: () => void;
   resetAttempts: () => void;
   setFailureReason: (reason: string | null) => void;
   addOrUpdateTransaction: (tx: Transaction) => void;
   selectTransaction: (tx: Transaction | null) => void;
   setCurrency: (currency: Currency) => void;
+  setLastFormValues: (values: PaymentFormValues | null) => void;
   resetPayment: () => void;
 }
 
@@ -34,6 +36,7 @@ export const usePaymentStore = create<PaymentState>()(
       transactions: [],
       selectedTransaction: null,
       currency: 'INR',
+      lastFormValues: null,
 
       setStatus: (status) => set({ status }),
       setTransactionId: (id) => set({ transactionId: id }),
@@ -54,6 +57,7 @@ export const usePaymentStore = create<PaymentState>()(
 
       selectTransaction: (tx) => set({ selectedTransaction: tx }),
       setCurrency: (currency) => set({ currency }),
+      setLastFormValues: (values) => set({ lastFormValues: values }),
 
       resetPayment: () =>
         set({
@@ -61,6 +65,7 @@ export const usePaymentStore = create<PaymentState>()(
           transactionId: null,
           currentAttempt: 0,
           failureReason: null,
+          lastFormValues: null,
         }),
     }),
     {

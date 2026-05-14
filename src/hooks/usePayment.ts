@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { usePaymentStore } from '@/store/paymentStore';
 import { submitPayment, APIError } from '@/utils/apiClient';
 import type { PaymentFormValues, Transaction } from '@/types';
@@ -10,6 +10,7 @@ export function usePayment() {
     currentAttempt,
     maxAttempts,
     failureReason,
+    lastFormValues,
     setStatus,
     setTransactionId,
     incrementAttempt,
@@ -18,21 +19,20 @@ export function usePayment() {
     addOrUpdateTransaction,
     resetPayment,
     currency,
+    setLastFormValues,
   } = usePaymentStore();
-
-  const txIdRef = useRef<string | null>(null);
-  const lastFormRef = useRef<PaymentFormValues | null>(null);
 
   const pay = useCallback(
     async (form: PaymentFormValues) => {
-      lastFormRef.current = form;
-      if (!txIdRef.current) {
-        txIdRef.current = crypto.randomUUID();
-        setTransactionId(txIdRef.current);
+      setLastFormValues(form);
+
+      let txId = transactionId;
+      if (!txId) {
+        txId = crypto.randomUUID();
+        setTransactionId(txId);
         resetAttempts();
       }
 
-      const txId = txIdRef.current;
       const attempt = currentAttempt + 1;
       incrementAttempt();
       setStatus('processing');
@@ -64,7 +64,6 @@ export function usePayment() {
             cardholderName: form.cardholderName,
           };
           addOrUpdateTransaction(tx);
-          txIdRef.current = null;
         } else {
           const reason = response.failureReason ?? 'Payment failed';
           setStatus('failed');
@@ -105,6 +104,7 @@ export function usePayment() {
       }
     },
     [
+      transactionId,
       currentAttempt,
       incrementAttempt,
       setStatus,
@@ -112,24 +112,23 @@ export function usePayment() {
       resetAttempts,
       setFailureReason,
       addOrUpdateTransaction,
+      setLastFormValues,
     ]
   );
 
   const retry = useCallback(() => {
-    if (lastFormRef.current) pay(lastFormRef.current);
-  }, [pay]);
+    if (lastFormValues) pay(lastFormValues);
+  }, [lastFormValues, pay]);
 
   const startNewPayment = useCallback(() => {
-    txIdRef.current = null;
-    lastFormRef.current = null;
     resetPayment();
   }, [resetPayment]);
 
   const canRetry = (status === 'failed' || status === 'timeout') && currentAttempt < maxAttempts;
   const attemptsExhausted = (status === 'failed' || status === 'timeout') && currentAttempt >= maxAttempts;
 
-  const lastAmount = lastFormRef.current?.amount ?? '';
-  const lastCurrency = lastFormRef.current?.currency ?? currency;
+  const lastAmount = lastFormValues?.amount ?? '';
+  const lastCurrency = lastFormValues?.currency ?? currency;
 
   return {
     status,
